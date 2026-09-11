@@ -156,3 +156,43 @@
   border-color: rgba(56, 189, 248, 0.18) !important;
   color: #e6edf7 !important;
 }
+
+/* Project evidence follows the existing ocean-console visual language. */
+html { scroll-padding-top: 100px; }
+.project-information {
+  background: linear-gradient(180deg, #091522 0%, #050a15 100%);
+  letter-spacing: 0;
+}
+.project-information [id] { scroll-margin-top: 16px; }
+.project-area {
+  min-width: 0;
+  padding: 28px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-top: 2px solid currentColor;
+  border-radius: 8px;
+  background: rgba(15, 30, 50, 0.25);
+  transition: border-color 180ms ease, background-color 180ms ease;
+}
+.project-area:hover { background: rgba(15, 30, 50, 0.5); }
+.project-tone-cyan { color: #67e8f9; }
+.project-tone-amber { color: #fde68a; }
+.project-tone-emerald { color: #6ee7b7; }
+.project-tone-rose { color: #fda4af; }
+.project-status {
+  display: inline-flex;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.project-link { color: #a5f3fc; transition: color 180ms ease; }
+.project-link:hover { color: #fff; text-decoration: underline; text-underline-offset: 5px; }
+.project-link:focus-visible, .orca-nav-link:focus-visible {
+  outline: 2px solid #67e8f9;
+  outline-offset: 5px;
+  border-radius: 3px;
+}
+@media (max-width: 639px) {
+  .project-area { padding: 20px; }
+}

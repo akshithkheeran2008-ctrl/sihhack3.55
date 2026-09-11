@@ -45,24 +45,23 @@ export default function AlertCentre() {
   }, []);
 
   return (
-    <section className="section-bg py-24">
+    <section id="alerts" className="section-bg py-24">
       <div className="max-w-7xl mx-auto px-6">
         <div className="section-num inline-flex items-center gap-2">
           03 · COASTAL ALERT CENTRE
-          {live && (
-            <span className="ml-2 inline-flex items-center gap-1.5 text-emerald-300 normal-case tracking-normal text-[11px]">
-              <span className="dot-live" /> live from server
+            <span data-testid="alerts-data-source" className="ml-2 inline-flex items-center gap-1.5 text-amber-200 normal-case tracking-normal text-[11px]">
+              {live ? "Seeded examples · database-backed" : "Local demo examples"}
             </span>
-          )}
         </div>
         <h2 className="mt-3 font-display text-4xl md:text-5xl text-white">Warnings with a response attached</h2>
         <p className="mt-4 max-w-2xl text-slate-300/80">
           ORCA does not stop at a red dot. Every alert includes cause, location, timing, and the next practical action.
         </p>
+        <p data-testid="alerts-demo-notice" className="mt-3 max-w-2xl text-sm leading-relaxed text-amber-200/90">Illustrative scenarios, not current warnings. No official alert feed is connected. Follow current official advisories for safety decisions.</p>
 
         <div className="mt-10 grid md:grid-cols-2 lg:grid-cols-3 gap-5">
           {alerts.map((a) => (
-            <div key={a.id} className="panel panel-hover p-6">
+            <div key={a.id} data-testid={`alert-${a.id}-card`} className="panel panel-hover p-6">
               <div className="flex items-center justify-between">
                 <span className={`text-[11px] px-2.5 py-1 rounded-full ${levelBadge(a.level)}`}>{a.level}</span>
                 <span className="inline-flex items-center gap-1.5 text-[11px] text-slate-400 font-mono">
@@ -86,9 +85,9 @@ export default function AlertCentre() {
         </div>
 
         <div className="mt-8">
-          <button className="btn-ghost inline-flex items-center gap-2">
-            Open full alert centre <ArrowRight className="h-4 w-4" />
-          </button>
+          <a href="#project-data-provenance" data-testid="alerts-data-provenance-link" className="btn-ghost inline-flex items-center gap-2">
+            About these alert examples <ArrowRight className="h-4 w-4" />
+          </a>
         </div>
       </div>
     </section>

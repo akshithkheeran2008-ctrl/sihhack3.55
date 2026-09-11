@@ -61,7 +61,7 @@ export default function CitizenReports() {
       });
       toast({
         title: `Report submitted · ${created.report_id}`,
-        description: `Urgency: ${created.urgency} · Routed to response team.`,
+        description: `Urgency: ${created.urgency} · Saved to the public demo workflow. No authority has been notified.`,
       });
       setDesc("");
       setImage(null);
@@ -87,12 +87,13 @@ export default function CitizenReports() {
         <div className="lg:col-span-5">
           <div className="section-num">05 · CITIZEN REPORTS</div>
           <h2 className="mt-3 font-display text-4xl md:text-5xl text-white">Your observation is a coastal sensor</h2>
-          <p className="mt-4 text-slate-300/80">
-            Upload a local photo, describe what you see, and ORCA will assign a traceable ID with a 5-step response workflow — stored in MongoDB.
+          <p data-testid="report-collection-description" className="mt-4 text-slate-300/80">
+            Describe a coastal observation and receive a traceable ID. Report text and workflow status are stored in MongoDB; optional photos are local previews only and are not saved.
           </p>
+          <p data-testid="report-privacy-notice" className="mt-3 text-sm leading-relaxed text-amber-200/90">Reports are public and unverified. Do not include personal or sensitive information. Submitting does not notify authorities or emergency services.</p>
 
           <ol className="mt-8 space-y-4">
-            {["Share the location and signal type.", "ORCA classifies urgency using rule-based reasoning.", "Response teams receive a traceable report ID (ORC-XXXX)."].map((step, i) => (
+            {["Share the location and signal type.", "ORCA classifies urgency using rule-based reasoning.", "Your observation receives a traceable report ID (ORC-XXXX)."].map((step, i) => (
               <li key={i} className="flex items-start gap-4">
                 <span className="h-8 w-8 flex items-center justify-center rounded-full border border-cyan-400/30 bg-cyan-400/10 text-cyan-300 font-mono text-[12px]">{String(i + 1).padStart(2, "0")}</span>
                 <span className="text-[14px] text-slate-200 pt-1">{step}</span>
@@ -101,7 +102,7 @@ export default function CitizenReports() {
           </ol>
         </div>
 
-        <div className="lg:col-span-7 panel p-6">
+        <div className="lg:col-span-7 min-w-0 panel p-6">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-xl font-semibold text-white">Create a field report</h3>
@@ -114,26 +115,27 @@ export default function CitizenReports() {
 
           <form onSubmit={submit} className="mt-6 grid md:grid-cols-2 gap-4">
             <div>
-              <label className="text-[12px] text-slate-400">Location</label>
+              <label htmlFor="report-location" className="text-[12px] text-slate-400">Location</label>
               <Select value={location} onValueChange={setLocation}>
-                <SelectTrigger className="orca-select-trigger h-11 mt-1"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {regions.map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
+                <SelectTrigger id="report-location" data-testid="report-location-select" className="orca-select-trigger h-11 mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent data-testid="report-location-options">
+                  {regions.map((r) => <SelectItem data-testid={`report-location-${r.id}-option`} key={r.id} value={r.id}>{r.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <label className="text-[12px] text-slate-400">Issue type</label>
+              <label htmlFor="report-issue" className="text-[12px] text-slate-400">Issue type</label>
               <Select value={issue} onValueChange={setIssue}>
-                <SelectTrigger className="orca-select-trigger h-11 mt-1"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {issueTypes.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                <SelectTrigger id="report-issue" data-testid="report-issue-select" className="orca-select-trigger h-11 mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent data-testid="report-issue-options">
+                  {issueTypes.map((t) => <SelectItem data-testid={`report-issue-${t.toLowerCase().replace(/\s+/g, "-")}-option`} key={t} value={t}>{t}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="md:col-span-2">
-              <label className="text-[12px] text-slate-400">Date</label>
+              <label htmlFor="report-date" className="text-[12px] text-slate-400">Date (optional)</label>
               <input
+                id="report-date" data-testid="report-date-input"
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
@@ -141,8 +143,9 @@ export default function CitizenReports() {
               />
             </div>
             <div className="md:col-span-2">
-              <label className="text-[12px] text-slate-400">Description</label>
+              <label htmlFor="report-description" className="text-[12px] text-slate-400">Description (optional)</label>
               <textarea
+                id="report-description" data-testid="report-description-input"
                 value={desc}
                 onChange={(e) => setDesc(e.target.value)}
                 rows={4}
@@ -151,17 +154,17 @@ export default function CitizenReports() {
               />
             </div>
             <div className="md:col-span-2">
-              <label className="text-[12px] text-slate-400">Upload image (optional, local preview)</label>
+              <p data-testid="report-image-storage-notice" className="text-[12px] text-slate-400">Image preview (optional · not uploaded or saved)</p>
               <div className="mt-1 flex items-center gap-3">
-                <label className="btn-ghost inline-flex items-center gap-2 py-2 px-4 text-[13px] cursor-pointer">
+                <label data-testid="report-image-choose-button" className="btn-ghost inline-flex items-center gap-2 py-2 px-4 text-[13px] cursor-pointer">
                   <Upload className="h-4 w-4" /> Choose a shoreline image
-                  <input type="file" accept="image/*" onChange={onImage} className="hidden" />
+                  <input data-testid="report-image-input" type="file" accept="image/*" onChange={onImage} className="sr-only" />
                 </label>
-                {image && <img src={image} alt="preview" className="h-16 w-24 object-cover rounded-md border border-white/10" />}
+                {image && <img data-testid="report-image-preview" src={image} alt="Local shoreline preview" className="h-16 w-24 object-contain rounded-md border border-white/10" />}
               </div>
             </div>
-            <div className="md:col-span-2 flex items-center gap-3">
-              <button type="submit" disabled={busy} className="btn-primary inline-flex items-center gap-2 disabled:opacity-70">
+            <div className="md:col-span-2 flex flex-wrap items-center gap-3">
+              <button data-testid="report-submit-button" type="submit" disabled={busy} className="btn-primary inline-flex items-center gap-2 disabled:opacity-70">
                 {busy ? <><RefreshCw className="h-4 w-4 animate-spin" /> Submitting…</> : <><AlertTriangle className="h-4 w-4" /> Submit citizen report</>}
               </button>
               <span className="text-[12px] text-slate-400 inline-flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-cyan-300" /> Traceable ID assigned by server.</span>
@@ -170,25 +173,25 @@ export default function CitizenReports() {
         </div>
 
         {/* Live reports table */}
-        <div className="lg:col-span-12 panel p-6">
-          <div className="flex items-center justify-between">
+        <div className="lg:col-span-12 min-w-0 panel p-6">
+          <div className="flex flex-wrap gap-3 items-center justify-between">
             <div>
               <div className="section-num">SIGNAL TO ACTION · LIVE</div>
               <h3 className="mt-2 text-xl font-semibold text-white">Latest citizen reports</h3>
-              <p className="text-[12px] text-slate-400 mt-1">Stored in MongoDB · advance the workflow step-by-step.</p>
+              <p data-testid="report-workflow-disclaimer" className="text-[12px] text-slate-400 mt-1 max-w-2xl leading-relaxed">Stored in MongoDB · manually advanced demo stages. “AI Analyzed”, “Verified” and “Resolved” do not establish actual analysis, independent review or real-world resolution.</p>
             </div>
-            <button onClick={loadReports} className="btn-ghost inline-flex items-center gap-2 py-2 px-4 text-[13px]">
+            <button data-testid="report-refresh-button" onClick={loadReports} className="btn-ghost inline-flex items-center gap-2 py-2 px-4 text-[13px]">
               <RefreshCw className="h-4 w-4" /> Refresh
             </button>
           </div>
 
           {reports.length === 0 ? (
-            <div className="mt-6 rounded-xl border border-dashed border-white/[0.08] p-8 text-center text-slate-400 text-[13px]">
+            <div data-testid="reports-empty-state" className="mt-6 rounded-xl border border-dashed border-white/[0.08] p-8 text-center text-slate-400 text-[13px]">
               No reports yet. Submit one above and it will appear here with a traceable ID.
             </div>
           ) : (
             <div className="mt-6 overflow-x-auto">
-              <table className="w-full text-[13px]">
+              <table data-testid="reports-table" className="w-full text-[13px]">
                 <thead className="text-left text-slate-400 font-mono text-[11px] uppercase tracking-wider">
                   <tr className="border-b border-white/[0.06]">
                     <th className="py-3 pr-4">Report ID</th>
@@ -201,24 +204,24 @@ export default function CitizenReports() {
                 </thead>
                 <tbody>
                   {reports.map((r) => (
-                    <tr key={r.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
-                      <td className="py-3 pr-4 font-mono text-cyan-300">{r.report_id}</td>
+                    <tr data-testid={`report-${r.report_id}-row`} key={r.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
+                      <td data-testid={`report-${r.report_id}-id`} className="py-3 pr-4 font-mono text-cyan-300">{r.report_id}</td>
                       <td className="py-3 pr-4 text-slate-200">{r.region_name}</td>
                       <td className="py-3 pr-4 text-slate-300">{r.issue_type}</td>
                       <td className="py-3 pr-4">
-                        <span className={`text-[11px] px-2 py-0.5 rounded-full ${urgencyBadge(r.urgency)}`}>{r.urgency}</span>
+                        <span data-testid={`report-${r.report_id}-urgency`} className={`text-[11px] px-2 py-0.5 rounded-full ${urgencyBadge(r.urgency)}`}>{r.urgency}</span>
                       </td>
                       <td className="py-3 pr-4">
                         <WorkflowBar step={r.step} />
-                        <div className="mt-1 text-[11px] text-slate-400 font-mono">{r.status}</div>
+                        <div data-testid={`report-${r.report_id}-status`} className="mt-1 text-[11px] text-slate-400 font-mono">{r.status}</div>
                       </td>
                       <td className="py-3 pr-4 text-right">
                         {r.step < 5 ? (
-                          <button onClick={() => onAdvance(r.report_id)} className="inline-flex items-center gap-1.5 text-cyan-300 hover:text-cyan-200 text-[12px]">
+                          <button data-testid={`report-${r.report_id}-advance-button`} onClick={() => onAdvance(r.report_id)} className="inline-flex items-center gap-1.5 text-cyan-300 hover:text-cyan-200 text-[12px]">
                             Advance <ArrowRight className="h-3.5 w-3.5" />
                           </button>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 text-emerald-300 text-[12px]"><Check className="h-3.5 w-3.5" /> Resolved</span>
+                          <span data-testid={`report-${r.report_id}-resolved-indicator`} className="inline-flex items-center gap-1.5 text-emerald-300 text-[12px]"><Check className="h-3.5 w-3.5" /> Resolved</span>
                         )}
                       </td>
                     </tr>

@@ -38,6 +38,7 @@ export default function Fisherman() {
           Choose a coastal district and get a simple, visual sea-condition brief for the next trip. Covering 10
           districts across India’s coast.
         </p>
+        <p data-testid="fisherman-demo-notice" className="mt-3 max-w-2xl text-sm leading-relaxed text-amber-200/90">Sample conditions and routes only—not navigation or sailing advice. Follow current official marine forecasts and local authorities.</p>
 
         <div className="mt-10 grid lg:grid-cols-12 gap-6">
           <div className="lg:col-span-5 panel p-6">

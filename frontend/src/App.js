@@ -11,6 +11,7 @@ import CitizenReports from "./components/orca/CitizenReports";
 import Reasoning from "./components/orca/Reasoning";
 import Collaboration from "./components/orca/Collaboration";
 import Footer from "./components/orca/Footer";
+import { ProjectInformation } from "./components/orca/ProjectInformation";
 import { Toaster } from "./components/ui/toaster";
 
 const Home = () => (
@@ -24,6 +25,7 @@ const Home = () => (
     <CitizenReports />
     <Reasoning />
     <Collaboration />
+    <ProjectInformation />
     <Footer />
     <Toaster />
   </div>
