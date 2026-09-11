@@ -1,0 +1,47 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Instrument+Serif&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body { background: #050a15; }
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: #e6edf7;
+}
+
+::selection { background: rgba(34, 211, 238, 0.35); color: #e6faff; }
+
+@layer base {
+  :root {
+    --background: 210 40% 4%;
+    --foreground: 210 20% 92%;
+    --card: 210 40% 6%;
+    --card-foreground: 210 20% 92%;
+    --popover: 210 40% 6%;
+    --popover-foreground: 210 20% 92%;
+    --primary: 187 92% 62%;
+    --primary-foreground: 210 40% 8%;
+    --secondary: 210 30% 12%;
+    --secondary-foreground: 210 20% 92%;
+    --muted: 210 30% 12%;
+    --muted-foreground: 210 20% 60%;
+    --accent: 187 92% 62%;
+    --accent-foreground: 210 40% 8%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 20% 98%;
+    --border: 210 30% 16%;
+    --input: 210 30% 16%;
+    --ring: 187 92% 62%;
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  body { @apply bg-background text-foreground; }
+}
