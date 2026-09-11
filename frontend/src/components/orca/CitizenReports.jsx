@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Camera, Upload, MapPin, AlertTriangle, Check } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Camera, Upload, MapPin, AlertTriangle, Check, RefreshCw, ArrowRight } from "lucide-react";
 import { regions, issueTypes } from "../../mock";
 import {
   Select,
@@ -9,6 +9,16 @@ import {
   SelectValue,
 } from "../ui/select";
 import { useToast } from "../../hooks/use-toast";
+import { createReport, fetchReports, advanceReport } from "../../lib/orcaApi";
+
+const WORKFLOW = ["Reported", "AI Analyzed", "Verified", "Action Started", "Resolved"];
+
+function urgencyBadge(u) {
+  if (u === "Critical") return "badge-crit";
+  if (u === "High") return "badge-high";
+  if (u === "Medium") return "badge-mod";
+  return "badge-safe";
+}
 
 export default function CitizenReports() {
   const [location, setLocation] = useState("gulf-of-mannar");
@@ -16,21 +26,59 @@ export default function CitizenReports() {
   const [date, setDate] = useState("");
   const [desc, setDesc] = useState("");
   const [image, setImage] = useState(null);
-  const [submitted, setSubmitted] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [reports, setReports] = useState([]);
   const { toast } = useToast();
+
+  const loadReports = async () => {
+    try {
+      const data = await fetchReports();
+      setReports(data.slice(0, 6));
+    } catch (e) {}
+  };
+
+  useEffect(() => {
+    loadReports();
+  }, []);
 
   const onImage = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const url = URL.createObjectURL(file);
-    setImage(url);
+    setImage(URL.createObjectURL(file));
   };
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
-    const id = "ORC-" + Math.floor(1000 + Math.random() * 9000);
-    setSubmitted(id);
-    toast({ title: "Report submitted (demo)", description: `Traceable ID ${id} routed to response team.` });
+    setBusy(true);
+    try {
+      const regionName = regions.find((r) => r.id === location)?.name || location;
+      const created = await createReport({
+        region_id: location,
+        region_name: regionName,
+        issue_type: issue,
+        description: desc,
+        date,
+      });
+      toast({
+        title: `Report submitted · ${created.report_id}`,
+        description: `Urgency: ${created.urgency} · Routed to response team.`,
+      });
+      setDesc("");
+      setImage(null);
+      await loadReports();
+    } catch (err) {
+      toast({ title: "Submission failed", description: "Please try again." });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onAdvance = async (reportId) => {
+    try {
+      const updated = await advanceReport(reportId);
+      toast({ title: `${updated.report_id} → ${updated.status}` });
+      await loadReports();
+    } catch (e) {}
   };
 
   return (
@@ -40,11 +88,11 @@ export default function CitizenReports() {
           <div className="section-num">05 · CITIZEN REPORTS</div>
           <h2 className="mt-3 font-display text-4xl md:text-5xl text-white">Your observation is a coastal sensor</h2>
           <p className="mt-4 text-slate-300/80">
-            Upload a local photo, describe what you see, and let the demo workflow route it to the right response team.
+            Upload a local photo, describe what you see, and ORCA will assign a traceable ID with a 5-step response workflow — stored in MongoDB.
           </p>
 
           <ol className="mt-8 space-y-4">
-            {["Share the location and signal type.", "ORCA AI classifies urgency using simulated reasoning.", "Response teams receive a traceable report ID."].map((step, i) => (
+            {["Share the location and signal type.", "ORCA classifies urgency using rule-based reasoning.", "Response teams receive a traceable report ID (ORC-XXXX)."].map((step, i) => (
               <li key={i} className="flex items-start gap-4">
                 <span className="h-8 w-8 flex items-center justify-center rounded-full border border-cyan-400/30 bg-cyan-400/10 text-cyan-300 font-mono text-[12px]">{String(i + 1).padStart(2, "0")}</span>
                 <span className="text-[14px] text-slate-200 pt-1">{step}</span>
@@ -57,7 +105,7 @@ export default function CitizenReports() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-xl font-semibold text-white">Create a field report</h3>
-              <p className="text-[12px] text-slate-400 mt-1">Demo submission · local image preview only</p>
+              <p className="text-[12px] text-slate-400 mt-1">Live · saved to MongoDB with traceable ID</p>
             </div>
             <div className="h-10 w-10 rounded-xl border border-cyan-400/25 bg-cyan-400/10 flex items-center justify-center">
               <Camera className="h-4 w-4 text-cyan-300" />
@@ -112,19 +160,89 @@ export default function CitizenReports() {
                 {image && <img src={image} alt="preview" className="h-16 w-24 object-cover rounded-md border border-white/10" />}
               </div>
             </div>
-            <div className="md:col-span-2">
-              <button type="submit" className="btn-primary inline-flex items-center gap-2">
-                {submitted ? <><Check className="h-4 w-4" /> Submitted · {submitted}</> : <><AlertTriangle className="h-4 w-4" /> Submit citizen report</>}
+            <div className="md:col-span-2 flex items-center gap-3">
+              <button type="submit" disabled={busy} className="btn-primary inline-flex items-center gap-2 disabled:opacity-70">
+                {busy ? <><RefreshCw className="h-4 w-4 animate-spin" /> Submitting…</> : <><AlertTriangle className="h-4 w-4" /> Submit citizen report</>}
               </button>
-              {submitted && <span className="ml-3 text-[12px] text-emerald-300">Traceable ID assigned. Routed to demo response team.</span>}
+              <span className="text-[12px] text-slate-400 inline-flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5 text-cyan-300" /> Traceable ID assigned by server.</span>
             </div>
           </form>
+        </div>
 
-          <div className="mt-6 flex items-center gap-2 text-[12px] text-slate-400">
-            <MapPin className="h-3.5 w-3.5 text-cyan-300" /> Reports route by lat/long geo-tag when available.
+        {/* Live reports table */}
+        <div className="lg:col-span-12 panel p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="section-num">SIGNAL TO ACTION · LIVE</div>
+              <h3 className="mt-2 text-xl font-semibold text-white">Latest citizen reports</h3>
+              <p className="text-[12px] text-slate-400 mt-1">Stored in MongoDB · advance the workflow step-by-step.</p>
+            </div>
+            <button onClick={loadReports} className="btn-ghost inline-flex items-center gap-2 py-2 px-4 text-[13px]">
+              <RefreshCw className="h-4 w-4" /> Refresh
+            </button>
           </div>
+
+          {reports.length === 0 ? (
+            <div className="mt-6 rounded-xl border border-dashed border-white/[0.08] p-8 text-center text-slate-400 text-[13px]">
+              No reports yet. Submit one above and it will appear here with a traceable ID.
+            </div>
+          ) : (
+            <div className="mt-6 overflow-x-auto">
+              <table className="w-full text-[13px]">
+                <thead className="text-left text-slate-400 font-mono text-[11px] uppercase tracking-wider">
+                  <tr className="border-b border-white/[0.06]">
+                    <th className="py-3 pr-4">Report ID</th>
+                    <th className="py-3 pr-4">Region</th>
+                    <th className="py-3 pr-4">Issue</th>
+                    <th className="py-3 pr-4">Urgency</th>
+                    <th className="py-3 pr-4">Workflow</th>
+                    <th className="py-3 pr-4 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reports.map((r) => (
+                    <tr key={r.id} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
+                      <td className="py-3 pr-4 font-mono text-cyan-300">{r.report_id}</td>
+                      <td className="py-3 pr-4 text-slate-200">{r.region_name}</td>
+                      <td className="py-3 pr-4 text-slate-300">{r.issue_type}</td>
+                      <td className="py-3 pr-4">
+                        <span className={`text-[11px] px-2 py-0.5 rounded-full ${urgencyBadge(r.urgency)}`}>{r.urgency}</span>
+                      </td>
+                      <td className="py-3 pr-4">
+                        <WorkflowBar step={r.step} />
+                        <div className="mt-1 text-[11px] text-slate-400 font-mono">{r.status}</div>
+                      </td>
+                      <td className="py-3 pr-4 text-right">
+                        {r.step < 5 ? (
+                          <button onClick={() => onAdvance(r.report_id)} className="inline-flex items-center gap-1.5 text-cyan-300 hover:text-cyan-200 text-[12px]">
+                            Advance <ArrowRight className="h-3.5 w-3.5" />
+                          </button>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 text-emerald-300 text-[12px]"><Check className="h-3.5 w-3.5" /> Resolved</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
     </section>
+  );
+}
+
+function WorkflowBar({ step }) {
+  return (
+    <div className="flex items-center gap-1">
+      {WORKFLOW.map((_, i) => (
+        <span
+          key={i}
+          className="h-1.5 w-8 rounded-full"
+          style={{ background: i < step ? "linear-gradient(90deg,#22d3ee,#34d399)" : "rgba(120,156,200,0.15)" }}
+        />
+      ))}
+    </div>
   );
 }

@@ -1,8 +1,26 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { ArrowRight, AlertTriangle, Thermometer, Wind, Radio, ShieldCheck, Activity } from "lucide-react";
-import { coastalStats } from "../../mock";
+import { coastalStats as fallback } from "../../mock";
+import { fetchStats } from "../../lib/orcaApi";
 
 export default function Hero() {
+  const [coastalStats, setCoastalStats] = useState(fallback);
+  useEffect(() => {
+    fetchStats()
+      .then((s) => {
+        setCoastalStats({
+          networkReadiness: s.network_readiness,
+          sstAnomaly: s.sst_anomaly,
+          meanWind: s.mean_wind,
+          lastSync: s.last_sync,
+          activeAlerts: s.active_alerts,
+          safeFishingZones: s.safe_fishing_zones,
+          citizenReports: s.citizen_reports,
+          ecosystemHealth: s.ecosystem_health,
+        });
+      })
+      .catch(() => {});
+  }, []);
   return (
     <section id="home" className="hero-bg relative overflow-hidden">
       <div className="absolute inset-0 grid-overlay opacity-40 pointer-events-none" />
@@ -72,13 +90,13 @@ export default function Hero() {
           </div>
         </div>
 
-        <StatsRow />
+        <StatsRow coastalStats={coastalStats} />
       </div>
     </section>
   );
 }
 
-function StatsRow() {
+function StatsRow({ coastalStats }) {
   const stats = [
     { label: "Active coastal alerts", value: coastalStats.activeAlerts, hint: "Cyclone · Bleaching · Pollution" },
     { label: "Safe fishing zones", value: coastalStats.safeFishingZones, hint: "Across 10 coastal states" },

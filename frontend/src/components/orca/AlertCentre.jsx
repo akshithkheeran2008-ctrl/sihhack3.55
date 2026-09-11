@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { ArrowRight, MapPin, Radio, Clock } from "lucide-react";
-import { alerts } from "../../mock";
+import { alerts as fallback } from "../../mock";
+import { fetchAlerts, seedAlerts } from "../../lib/orcaApi";
 
 function levelBadge(level) {
   if (level === "Critical") return "badge-crit";
@@ -10,10 +11,50 @@ function levelBadge(level) {
 }
 
 export default function AlertCentre() {
+  const [alerts, setAlerts] = useState(fallback);
+  const [live, setLive] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        await seedAlerts();
+        const data = await fetchAlerts();
+        if (!cancelled && Array.isArray(data) && data.length) {
+          // Map backend fields to card shape
+          const mapped = data.map((a) => ({
+            id: a.alert_id,
+            level: a.level,
+            status: a.status,
+            title: a.title,
+            location: a.location,
+            cause: a.cause,
+            response: a.response,
+            time: a.time,
+          }));
+          setAlerts(mapped);
+          setLive(true);
+        }
+      } catch (e) {
+        // fall back to mock, no user-facing error
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <section className="section-bg py-24">
       <div className="max-w-7xl mx-auto px-6">
-        <div className="section-num">03 · COASTAL ALERT CENTRE</div>
+        <div className="section-num inline-flex items-center gap-2">
+          03 · COASTAL ALERT CENTRE
+          {live && (
+            <span className="ml-2 inline-flex items-center gap-1.5 text-emerald-300 normal-case tracking-normal text-[11px]">
+              <span className="dot-live" /> live from server
+            </span>
+          )}
+        </div>
         <h2 className="mt-3 font-display text-4xl md:text-5xl text-white">Warnings with a response attached</h2>
         <p className="mt-4 max-w-2xl text-slate-300/80">
           ORCA does not stop at a red dot. Every alert includes cause, location, timing, and the next practical action.
@@ -38,7 +79,7 @@ export default function AlertCentre() {
               <p className="mt-1 text-[13px] text-slate-200">{a.response}</p>
               <div className="mt-4 flex items-center justify-between text-[11px] text-slate-500 font-mono">
                 <span className="inline-flex items-center gap-1.5"><Clock className="h-3 w-3" /> {a.time}</span>
-                <span>ALERT-{a.id.toUpperCase()}</span>
+                <span>{String(a.id).toUpperCase()}</span>
               </div>
             </div>
           ))}
